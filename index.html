@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#faf7f2">
+<title>學中文 · Learn Chinese</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+window.FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDlSW2a8ayMmncNRYGewS7Yu3Yu1hm5xao",
+  authDomain: "chinese-app-622f6.firebaseapp.com",
+  projectId: "chinese-app-622f6",
+  storageBucket: "chinese-app-622f6.firebasestorage.app",
+  messagingSenderId: "189981189315",
+  appId: "1:189981189315:web:c5381c0c5ce3b15200ae76"
+};
+</script>
+<style>
+:root{
+  --bg:#faf7f2; --surface:#ffffff; --surface2:#f3eee5; --ink:#2a2622; --ink2:#7a7066;
+  --line:#e7ded0; --warm:#e8732c; --warm-soft:#fbe9da; --gold:#e0a92e;
+  --good:#3f9d6b; --good-soft:#e3f1e8; --bad:#d65a4a; --bad-soft:#fae3df;
+  --blue:#3f7cae; --shadow:0 1px 2px rgba(42,38,34,.04),0 6px 20px rgba(42,38,34,.06);
+}
+@media (prefers-color-scheme:dark){
+  :root{ --bg:#1c1916; --surface:#262220; --surface2:#332e2a; --ink:#f3ece2; --ink2:#a89c8e;
+    --line:#3a342f; --warm:#f08a45; --warm-soft:#3a2a1e; --gold:#e7b94e;
+    --good:#5cba87; --good-soft:#23332a; --bad:#e8776a; --bad-soft:#36231f; --blue:#6fa3d0;
+    --shadow:0 1px 2px rgba(0,0,0,.2),0 6px 20px rgba(0,0,0,.3); }
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,"PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  background:var(--bg);color:var(--ink);min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;padding:14px 14px 36px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{width:100%;max-width:560px}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.logo{font-size:1.15rem;font-weight:700;letter-spacing:.3px}
+.logo span{color:var(--ink2);font-size:.7rem;font-weight:500;margin-left:5px}
+.streak{display:flex;align-items:center;gap:5px;background:var(--warm-soft);color:var(--warm);
+  font-weight:700;font-size:.85rem;padding:6px 12px;border-radius:999px}
+.nav{display:flex;gap:7px;margin-bottom:18px}
+.nav button{flex:1;background:var(--surface);border:1px solid var(--line);color:var(--ink2);
+  padding:9px;border-radius:12px;font-size:.8rem;cursor:pointer;font-weight:600;transition:.15s}
+.nav button.active{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+/* MAP */
+.lvl{margin-bottom:24px}
+.lvl-h{display:flex;align-items:center;gap:9px;margin-bottom:11px}
+.lvl-badge{background:var(--surface2);color:var(--ink2);font-size:.64rem;font-weight:700;
+  padding:3px 9px;border-radius:999px;letter-spacing:.5px}
+.lvl-h h2{font-size:.92rem;font-weight:700}
+.lvl-h .s{color:var(--ink2);font-size:.7rem}
+.lessons{display:flex;flex-direction:column;gap:9px}
+.lesson{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:13px 15px;
+  display:flex;align-items:center;gap:13px;cursor:pointer;transition:.15s;box-shadow:var(--shadow)}
+.lesson:active{transform:scale(.99)}
+.lesson.lock{opacity:.45;cursor:not-allowed;box-shadow:none}
+.lesson.done{border-color:var(--good)}
+.l-ic{width:42px;height:42px;border-radius:12px;background:var(--surface2);display:flex;
+  align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0}
+.lesson.done .l-ic{background:var(--good-soft)}
+.l-b{flex:1;min-width:0}
+.l-t{font-weight:600;font-size:.92rem}
+.l-m{color:var(--ink2);font-size:.72rem;margin-top:1px}
+.l-bar{height:5px;background:var(--surface2);border-radius:3px;margin-top:7px;overflow:hidden}
+.l-bar i{display:block;height:100%;background:var(--warm);border-radius:3px;transition:width .4s}
+.lesson.done .l-bar i{background:var(--good)}
+.l-st{font-size:1.15rem;color:var(--ink2)}
+
+/* STUDY */
+.study{display:none}.study.on{display:block}
+.s-top{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.s-close{background:none;border:none;color:var(--ink2);font-size:1.5rem;cursor:pointer;line-height:1;padding:2px 6px}
+.s-prog{flex:1;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden}
+.s-prog i{display:block;height:100%;background:var(--warm);border-radius:4px;transition:width .3s}
+.s-kind{font-size:.7rem;color:var(--ink2);text-align:center;margin-bottom:10px;
+  text-transform:uppercase;letter-spacing:1px;font-weight:600}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:34px 22px;
+  min-height:330px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:16px;box-shadow:var(--shadow);text-align:center}
+.hz{font-size:4.4rem;line-height:1.05;font-weight:600}
+.hz .simp{font-size:1.15rem;color:var(--ink2);display:block;margin-top:8px;font-weight:400}
+.phon{display:flex;gap:22px;align-items:baseline;flex-wrap:wrap;justify-content:center}
+.bopo{font-size:2rem;color:var(--warm);font-weight:600}
+.pin{font-size:1.4rem;color:var(--ink2)}
+.mean{font-size:1.35rem;font-weight:600}
+.eg{font-size:.92rem;color:var(--ink2);max-width:380px;line-height:1.6}
+.eg b{color:var(--ink);font-weight:600}
+.spk{background:var(--warm-soft);border:none;color:var(--warm);width:54px;height:54px;
+  border-radius:50%;cursor:pointer;font-size:1.5rem;display:flex;align-items:center;justify-content:center}
+.spk:active{transform:scale(.92)}
+.hint{color:var(--ink2);font-size:.85rem}
+.hidden{visibility:hidden}.gone{display:none}
+
+/* choices (listening / mcq) */
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;margin-top:6px}
+.choice{background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:16px 10px;
+  font-size:1.15rem;cursor:pointer;transition:.12s;color:var(--ink);font-weight:600}
+.choice:active{transform:scale(.97)}
+.choice.right{background:var(--good-soft);border-color:var(--good);color:var(--good)}
+.choice.wrong{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.choice.dim{opacity:.4}
+
+/* typing */
+.tin{width:100%;padding:15px;border:1.5px solid var(--line);border-radius:14px;background:var(--bg);
+  color:var(--ink);font-size:1.2rem;text-align:center;font-family:monospace}
+.tin:focus{outline:none;border-color:var(--warm)}
+
+.controls{margin-top:18px}
+.big-btn{width:100%;padding:17px;font-size:1.05rem;font-weight:700;border:none;border-radius:16px;
+  cursor:pointer;background:var(--warm);color:#fff}
+.big-btn:active{transform:scale(.99)}
+.big-btn.muted{background:var(--surface2);color:var(--ink2)}
+.grades{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.grade{padding:14px 4px;border:none;border-radius:13px;cursor:pointer;font-weight:700;font-size:.85rem;
+  display:flex;flex-direction:column;align-items:center;gap:2px;color:#fff}
+.grade small{font-weight:400;font-size:.6rem;opacity:.85}
+.g0{background:var(--bad)}.g1{background:var(--gold)}.g2{background:var(--blue)}.g3{background:var(--good)}
+
+.toolbar{display:flex;gap:7px;justify-content:center;margin-top:16px;flex-wrap:wrap}
+.tg{background:var(--surface);border:1px solid var(--line);color:var(--ink2);padding:6px 12px;
+  border-radius:999px;font-size:.72rem;cursor:pointer}
+.tg.on{background:var(--warm);color:#fff;border-color:var(--warm);font-weight:600}
+
+/* sync + generic panels */
+.view{display:none}.view.on{display:block}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px;
+  margin-bottom:14px;box-shadow:var(--shadow)}
+.panel h3{font-size:.95rem;margin-bottom:8px}
+.panel p{font-size:.82rem;color:var(--ink2);line-height:1.55;margin-bottom:12px}
+.btn{background:var(--warm);color:#fff;border:none;padding:11px 16px;border-radius:11px;font-weight:700;
+  cursor:pointer;font-size:.85rem;margin:0 8px 6px 0}
+.btn.ghost{background:var(--surface2);color:var(--ink)}
+.msg{font-size:.78rem;margin-top:6px;min-height:18px}
+.msg.ok{color:var(--good)}.msg.err{color:var(--bad)}
+.done-msg{text-align:center;padding:40px 18px}
+.done-msg .big{font-size:2.8rem;margin-bottom:8px}
+
+/* celebration tick */
+.tick{position:relative;width:0;height:0;overflow:visible}
+.tick.show::after{content:"✓";position:absolute;left:-22px;top:-60px;font-size:44px;color:var(--good);
+  animation:pop .5s ease}
+@keyframes pop{0%{transform:scale(.3);opacity:0}50%{transform:scale(1.2);opacity:1}100%{transform:scale(1);opacity:0}}
+.foot{color:var(--ink2);font-size:.7rem;text-align:center;margin-top:22px;line-height:1.5}
+.info{background:var(--surface2);border-radius:12px;padding:12px 14px;font-size:.78rem;color:var(--ink2);
+  line-height:1.5;margin-top:12px}
+.info b{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">學中文<span>daily Chinese</span></div>
+    <div class="streak"><span>🔥</span><span id="streak">0</span></div>
+  </header>
+
+  <div class="nav">
+    <button id="navMap" class="active">Lessons</button>
+    <button id="navReview">Review</button>
+    <button id="navSync">Sync</button>
+  </div>
+
+  <div id="mapView"></div>
+
+  <div class="study" id="studyView">
+    <div class="s-top">
+      <button class="s-close" id="closeStudy">✕</button>
+      <div class="s-prog"><i id="sProg"></i></div>
+    </div>
+    <div class="s-kind" id="sKind"></div>
+    <div class="card" id="card"></div>
+    <div class="controls" id="controls"></div>
+    <div class="toolbar" id="toolbar">
+      <button class="tg on" id="tBopo">注音</button>
+      <button class="tg on" id="tPin">pinyin</button>
+      <button class="tg on" id="tTrad">繁</button>
+      <button class="tg" id="tSimp">简</button>
+    </div>
+  </div>
+
+  <div class="view" id="syncView">
+    <div class="panel">
+      <h3>☁️ Sync across devices</h3>
+      <p>Sign in with the same Google account on your phone, iPad and computer. Progress then syncs automatically — nothing to paste, sign in once per device.</p>
+      <div id="signedOut"><button class="btn" id="signInBtn">Sign in with Google</button></div>
+      <div id="signedIn" style="display:none">
+        <p>Signed in as <b id="userEmail"></b> — syncing ✓</p>
+        <button class="btn ghost" id="pushNow">Sync now</button>
+        <button class="btn ghost" id="signOutBtn">Sign out</button>
+      </div>
+      <div class="msg" id="syncMsg"></div>
+    </div>
+    <div class="panel">
+      <h3>💾 Manual backup</h3>
+      <p>Offline safety net — saves/loads a small file via Google Drive.</p>
+      <button class="btn ghost" id="exportBtn">Export</button>
+      <button class="btn ghost" id="importBtn">Import</button>
+      <input type="file" id="fileInput" accept=".json" style="display:none">
+      <div class="msg" id="backupMsg"></div>
+    </div>
+    <div class="panel">
+      <h3>How the review buttons work</h3>
+      <p>After you see a card's answer, you rate how well you knew it. The app schedules the next review based on your honest answer:</p>
+      <div class="info">
+        <b>Again</b> — forgot it. Comes back in under a minute.<br>
+        <b>Hard</b> — barely knew it. Comes back soon.<br>
+        <b>Good</b> — knew it. Comes back in a few days.<br>
+        <b>Easy</b> — too easy. Pushed far out.
+      </div>
+    </div>
+  </div>
+
+  <div class="foot" id="foot"></div>
+</div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
